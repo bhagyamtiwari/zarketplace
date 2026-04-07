@@ -78,42 +78,68 @@ export function Checkout() {
   const shipping = listing.shipping_cost || 0;
   const total = subtotal + shipping;
 
+  const [isProcessing, setIsProcessing] = React.useState(false);
+
   const handleCheckout = async () => {
     if (paymentMethod === 'cod') {
-      return; // Should not happen as button is disabled or logic prevents it
+      return;
     }
 
-    if (!shippingAddress.fullName || !shippingAddress.email || !shippingAddress.address) {
+    if (!shippingAddress.fullName || !shippingAddress.email || !shippingAddress.address || !shippingAddress.phone) {
       alert("Please fill in all required shipping details.");
       return;
     }
 
-    // Generate a random order number for demo
+    setIsProcessing(true);
+
+    // Generate a unique order ID
     const newOrderNumber = `ZKT-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
     setOrderNumber(newOrderNumber);
 
     try {
-      // In a real app, you would call your backend to create a Cashfree order session
-      // const response = await fetch('/api/create-cashfree-session', { ... });
-      // const { payment_session_id } = await response.json();
+      // 1. Call your backend to create a Cashfree order session
+      const response = await fetch('/api/create-cashfree-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: total,
+          order_id: newOrderNumber,
+          customer_details: {
+            customer_id: shippingAddress.email.replace(/[^a-zA-Z0-9]/g, '_'),
+            customer_phone: shippingAddress.phone.replace(/[^0-9]/g, ''),
+            customer_email: shippingAddress.email,
+            customer_name: shippingAddress.fullName,
+          }
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create payment session");
+      }
+
+      const { payment_session_id } = data;
       
-      // For demo purposes, we'll simulate the Cashfree popup
-      console.log("Initiating Cashfree Payment...");
+      // 2. Trigger the Cashfree popup
+      await handleCashfreePayment(payment_session_id);
       
-      // Simulating a successful payment flow
-      // In reality, you'd call handleCashfreePayment(payment_session_id)
-      // and handle the callback/redirect
-      
+      // 3. If the modal closes or returns, we show the success view
+      // In a production app, you should verify the payment status via webhook or API
       setIsSuccess(true);
       window.scrollTo(0, 0);
       
-      // Simulate sending emails
+      // Simulate sending emails (in a real app, do this on the backend after payment verification)
       console.log(`Email sent to customer: ${shippingAddress.email} with order ${newOrderNumber}`);
       console.log(`Order summary sent to seller for item: ${listing.title}`);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment failed:", error);
-      alert("Payment failed. Please try again.");
+      alert(error.message || "Payment failed. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -413,13 +439,14 @@ export function Checkout() {
 
             <button 
               onClick={handleCheckout}
-              disabled={paymentMethod === 'cod'}
+              disabled={paymentMethod === 'cod' || isProcessing}
               className={cn(
-                "w-full py-6 text-xs font-black uppercase tracking-[0.4em] transition-all active:scale-[0.98]",
-                paymentMethod === 'cod' ? "bg-zinc-200 text-black/20 cursor-not-allowed" : "bg-black text-white hover:bg-zinc-800"
+                "w-full py-6 text-xs font-black uppercase tracking-[0.4em] transition-all active:scale-[0.98] flex items-center justify-center gap-2",
+                (paymentMethod === 'cod' || isProcessing) ? "bg-zinc-200 text-black/20 cursor-not-allowed" : "bg-black text-white hover:bg-zinc-800"
               )}
             >
-              {paymentMethod === 'online' ? 'Place Order' : 'Select Online Payment'}
+              {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isProcessing ? 'Processing...' : (paymentMethod === 'online' ? 'Place Order' : 'Select Online Payment')}
             </button>
 
             <div className="flex items-center justify-center gap-3 text-[9px] font-black uppercase tracking-[0.2em] text-black/30">
