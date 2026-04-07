@@ -99,6 +99,34 @@ export function Home() {
         </div>
       </section>
 
+      {/* MARKETPLACE PREVIEW SECTION - 40% */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-20">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-none">
+              More styles.<br />More sellers.<br />More choice.
+            </h2>
+          </div>
+          <Link to="/browse" className="group flex items-center gap-3 text-xs font-black uppercase tracking-[0.3em] border-b-2 border-black pb-2">
+            View All <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+          </Link>
+        </div>
+
+        {previewListings.length > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
+            {previewListings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="aspect-[3/4] bg-zinc-50 animate-pulse border border-black/5" />
+            ))}
+          </div>
+        )}
+      </section>
+
 {/* PROBLEM / SOLUTION SECTION - 20% (Shared with others) */}
 <section className="py-24 bg-zinc-50 border-y border-black/5">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
