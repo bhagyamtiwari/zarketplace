@@ -16,7 +16,6 @@ export function Checkout() {
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [orderNumber, setOrderNumber] = React.useState('');
   const [isBillingSameAsShipping, setIsBillingSameAsShipping] = React.useState(true);
-  const [isProcessing, setIsProcessing] = React.useState(false);
 
   const [shippingAddress, setShippingAddress] = React.useState({
     fullName: '',
@@ -79,6 +78,8 @@ export function Checkout() {
   const shipping = listing.shipping_cost || 0;
   const total = subtotal + shipping;
 
+  const [isProcessing, setIsProcessing] = React.useState(false);
+
   const handleCheckout = async () => {
     if (paymentMethod === 'cod') {
       return;
@@ -96,24 +97,23 @@ export function Checkout() {
     setOrderNumber(newOrderNumber);
 
     try {
-      // 1. Call Supabase Edge Function to create a Cashfree order session
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-order`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            amount: total,
+      // 1. Call your backend to create a Cashfree order session
+      const response = await fetch('/api/create-cashfree-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: total,
+          order_id: newOrderNumber,
+          customer_details: {
             customer_id: shippingAddress.email.replace(/[^a-zA-Z0-9]/g, '_'),
             customer_phone: shippingAddress.phone.replace(/[^0-9]/g, ''),
             customer_email: shippingAddress.email,
             customer_name: shippingAddress.fullName,
-          }),
-        }
-      );
+          }
+        }),
+      });
 
       const data = await response.json();
 
@@ -127,10 +127,11 @@ export function Checkout() {
       await handleCashfreePayment(payment_session_id);
       
       // 3. If the modal closes or returns, we show the success view
+      // In a production app, you should verify the payment status via webhook or API
       setIsSuccess(true);
       window.scrollTo(0, 0);
       
-      // Simulate sending emails
+      // Simulate sending emails (in a real app, do this on the backend after payment verification)
       console.log(`Email sent to customer: ${shippingAddress.email} with order ${newOrderNumber}`);
       console.log(`Order summary sent to seller for item: ${listing.title}`);
       
