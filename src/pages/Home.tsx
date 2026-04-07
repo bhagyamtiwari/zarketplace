@@ -99,14 +99,17 @@ export function Home() {
         </div>
       </section>
 
-      {/* MARKETPLACE PREVIEW SECTION - 40% */}
+   {/* MARKETPLACE PREVIEW SECTION - 40% */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-20">
           <div className="flex flex-col gap-4">
             <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-none">
-              More styles.<br />More sellers.<br />More choice.
+              Available<br />now.
             </h2>
           </div>
+        </div>
+      </section>
+      
           <Link to="/browse" className="group flex items-center gap-3 text-xs font-black uppercase tracking-[0.3em] border-b-2 border-black pb-2">
             View All <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
           </Link>
